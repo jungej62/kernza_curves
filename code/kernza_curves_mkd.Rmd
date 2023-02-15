@@ -9,22 +9,48 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Fitting models to determine N fertilizer rate for maximizing Kernza grain yields
+Vignette to demonstrate how to estimate the agronomically optimum nitrogen fertilizer rate for maximizing yield. The example includes Kernza grain yield response to 6 N fertilizer rates tested at three locations in 2012. Packages will be loaded prior to using functions that requires those packages, so you know which packages are 
+needed for certain functions.
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+```{r}
+library(Rmisc) #for handy-dandy summarizing of data. Tidyverse does this now, but I'll keep using a function from this old package.
+library(ggplot2) #To make plots
+library(nlme) #To make random effects models
+library(pgirmess) #For a complex function we'll write
+library(googlesheets4) #We'll pull some data from Google Sheets as well
 ```
 
-## Including Plots
+Read in the yield data.
 
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r}
+setwd("..")
+dat<-read.csv('data/Ndat.csv')
+head(dat)
 ```
+We have 6 columns showing Kernza seed yield (seedyld) in response to 6 nitrogen fertilizer rates (Nfertnew) at 3 locations (Lam, Was, & Mor). There are 4 reps of each treatment per location. There is also a 'trt' column that is a code identifier for the N fertilizer treatments. This should be a factor.
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+Let's use the 'structure' function str() to see what variables are factors.
+```{r}
+str(dat)
+```
+#Make some variables factors. Keep the originals, but make a new
+#column for each new factored variable and label it with an "f"
+
+```{r}
+dat$frep<-factor(dat$rep)
+dat$ftrt<-factor(dat$trt)
+str(dat)
+```
+Looks like our new variables are in the data frame as factors.
+Plot the data in ggplot to see what we should expect for best fitting function. First, summarize the data by averaging points within a rep for each treatment/location combo the summarySE() function in the Rmisc is awesome for this. I use it all the time. Many folks might use someting in the tidyR package now.
+```{r}
+sumdat<-summarySE(data=dat, measurevar="seedyld", groupvars=c("Nfertnew", "location"), na.rm=T)
+```
+Think of ggplot as a set of layers. The fist bits of information, which are filled in withing the initial ggplot arguement, include the dataset, and then the aesthetics, or aes(). In here, you tell ggplot what the x and y axes should represent. And if you want to apply any seperator, such as line color, point shape, line type, you can do that here.
+```{r}
+ggplot(sumdat, aes(x=Nfertnew, y=seedyld, color=location))+
+  geom_point()
+```
+Only adding points, but we will make each location a unique color as directed above.
+Now we'll add error bars to the points from another column of information in that same dataset.
