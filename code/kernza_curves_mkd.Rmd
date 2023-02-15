@@ -52,5 +52,131 @@ Think of ggplot as a set of layers. The fist bits of information, which are fill
 ggplot(sumdat, aes(x=Nfertnew, y=seedyld, color=location))+
   geom_point()
 ```
+
 Only adding points, but we will make each location a unique color as directed above.
 Now we'll add error bars to the points from another column of information in that same dataset.
+
+```{r}
+ggplot(sumdat, aes(x=Nfertnew, y=seedyld, color=location))+
+  geom_point()+
+  geom_errorbar(aes(ymin=seedyld-se, ymax=seedyld+se), width=0.2)
+```
+
+Note you can use the standard error, standard deviation, or 95% confidence interval for an errorbar as the summarySE function provides all 3.
+
+Now let's plot the data in other ways.
+First, treat N fertilizer as a categorical variable and draw some bar graphs, one for each location. Again, we use the summarySE() function to summarize the data into the groups we're interested in.
+
+```{r}
+sumdat2<-summarySE(dat, measurevar = "seedyld", groupvars=c("ftrt", "location"), na.rm=T)
+
+ggplot(sumdat2, aes(x=ftrt, y=seedyld, fill=location))+
+  geom_bar(position=position_dodge(), #puts the bars next to each other
+           stat="identity") +
+  geom_errorbar(aes(ymin=seedyld-se, ymax=seedyld+se),
+                width=0, #This changes how wide the horizontal part of the errorbar is.
+                position=position_dodge(.9)) #0.9 centers the error bars correctly.
+
+```
+Let's make a figure with three panels, one for each location. Use the facet_grid() or facet_wrap() commands. Both have interesting functions.
+
+```{r}
+ggplot(sumdat2, aes(x=ftrt, y=seedyld))+
+  facet_wrap(~location)+ #use one or the other, facet_wrap or facet_grid. Read the internet about pros and cons to both.
+  #facet_grid(~location, col=1)+
+  geom_bar(position=position_dodge(), #puts the bars next to each other
+           stat="identity") +
+  geom_errorbar(aes(ymin=seedyld-se, ymax=seedyld+se),
+                width=0, 
+                position=position_dodge(.9)) 
+
+```
+
+There are so many ways to customize your plots. 
+
+```{r}
+ggplot(sumdat, aes(x=Nfertnew, y=seedyld, color=location))+
+  geom_line()+ #order doesn't usually matter, but sometimes. geom_line simply connects the points
+  geom_point()+
+  stat_smooth(linetype=2,method = lm, formula = y ~ x + I(x^2), size = 1, se=FALSE)+ #I also changed the linetype and size in here. Note that it's applied to all the levels of your factor. Putting it in aes() would give you a unique linetype or size for each factor level (location in this case)
+  geom_errorbar(alpha = 0.5, width=0.9, aes(ymin=seedyld-se, ymax=seedyld+se))+ #alpha makes things more transparent
+  xlab(expression("N fertilizer rate " ~ ("kg N" ~ ha^{-1})))+ #use the expression() function to exponentiate characters in x axis label.
+  ylab("Growth index")+
+  scale_x_continuous(limits=c(0,200), breaks=c(0,50,100,150,200))+ #Control x axis 
+  ylim(c(0,1300))+
+  scale_color_manual(name="Location", values=c(1:3), labels=c("Lamberton", "Morris", "Waseca"))+ #This is important. This gives you control of the aes parameter that controls how your data are separated. If you adjust the "color" option in the aes, then it's scale_color_manual. If you adjust the fill option, like we did for the bar graph, then it's scale_fill_manual. Note that you can relable your levels and retitle the legend here.
+  theme( #This is where you can control many of the plot details. 
+    legend.key = element_rect(colour = NA, fill = NA),
+    legend.position=c(.75,.25),# the numbers are % of x and y axis. So c(0.1,0.1) would place the legend in the bottom left hand corner
+    legend.text=element_text(size=12),
+    legend.title=element_blank(), #turn this on and off with comment to see how it works
+    axis.text.x=element_text(size=12),
+    axis.text.y=element_text(size=12, color="red"),
+    axis.title.x=element_text(size=20),
+    axis.title.y = element_text(size=12))
+```
+
+Let's go back to N fertilizer as a continuous variable. We'll work with sumdat
+ggplot can fit functions to the data without having to create the linear model outside ggplot
+
+```{r}
+ggplot(sumdat, aes(x=Nfertnew, y=seedyld, color=location))+
+  geom_point()+
+  geom_errorbar(aes(ymin=seedyld-se, ymax=seedyld+se), width=0.2)+
+  stat_smooth(method = lm, formula = y ~ x + I(x^2), se=FALSE)
+```
+
+Or a linear line, and this time include the se 
+
+```{r}
+ggplot(sumdat, aes(x=Nfertnew, y=seedyld, color=location))+
+  geom_point()+
+  geom_errorbar(aes(ymin=seedyld-se, ymax=seedyld+se), width=0.2)+
+  stat_smooth(method = lm, formula = y ~ x, se=F) #see the difference in syntax here?
+
+```
+
+It looks like a curved function is going to fit best. However, we'll fit a linear function as well just to test it out.
+
+First, we'll fit equations for each location, treating them independently. Then, we'll treat location as a random effect and find the best fitting equation to model yield responses to N across all three locations.
+
+```{r}
+mod1<-lme(seedyld~Nfertnew*location, random=~1|rep, data=dat)# linear model
+mod2<-lme(seedyld~(Nfertnew+I(Nfertnew^2))*location, random=~1|rep, data=dat) #quadratic model. Note the weird notation for the quadratic term
+anova(mod1) 
+anova(mod2)
+```
+Look at model coefficients
+
+```{r}
+summary(mod1)
+summary(mod2)
+```
+There's no N rate X location interaction for either model, so I wouldn't treat each location independently, but for demonstration we'll do it anyway.
+
+Subset the locations
+```{r}
+Lamdat<-droplevels(subset(dat, location=="Lam")) #always droplevels() when subsetting, sometimes the old levels end up in the new dataset.
+Wasdat<-droplevels(subset(dat, location=="Was"))
+Mordat<-droplevels(subset(dat, location=="Mor"))
+
+```
+Manually create two models, a linear and quadratic, for each location; I'll just do lamberton
+
+```{r}
+Lammod1<-lme(seedyld~Nfertnew, random=~1|rep, data=Lamdat)
+Lammod2<-lme(seedyld~Nfertnew+I(Nfertnew^2), random=~1|rep, data=Lamdat)
+```
+
+Compare using liklihood ratio test
+
+```{r}
+anova(Lammod1, Lammod2) # Note that REML (restricted maximum liklihood) methods are not meaningful, so switch to ML (maximum liklihood)
+
+Lammod1.ml<-update(Lammod1, method="ML")
+Lammod2.ml<-update(Lammod2, method="ML")
+anova(Lammod1.ml, Lammod2.ml)
+```
+Lammod2.ml, the quadratic model, is far superior. AIC is much lower, and L.ratio is significant based on alpha=0.05
+
+
