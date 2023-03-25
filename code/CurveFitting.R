@@ -6,10 +6,10 @@
 ### requires those packages, so you know which packages are 
 ### needed for certain functions.
 
-setwd("/Users/junge037/Documents/Projects/Misc/MiscR/CurveFitting") #Set your own for where you save the data.
-setwd("D:/My Drive/Mac/Projects/Misc/MiscR/CurveFitting") #Set your own for where you save the data.
-setwd("/Volumes/GoogleDrive/My Drive/Mac/Projects/Misc/MiscR/CurveFitting")
-dat<-read.csv('Ndat.csv')
+#setwd("/Users/junge037/Documents/Projects/Misc/MiscR/CurveFitting") #Set your own for where you save the dat
+#setwd("D:/My Drive/Mac/Projects/Misc/MiscR/CurveFitting") #Set your own for where you save the data.
+#setwd("/Volumes/GoogleDrive/My Drive/Mac/Projects/Misc/MiscR/CurveFitting")
+dat<-read.csv('data/Ndat.csv')
 head(dat) # We have 6 columns showing Kernza seed yield (seedyld) in
 #response to 6 nitrogen fertilizer rates (Nfertnew) at 3 locations (Lam, Was, & Mor).
 #There are 4 reps of each treatment per location. There is also a 'trt' column that is 

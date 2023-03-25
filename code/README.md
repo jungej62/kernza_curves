@@ -1,1 +1,1 @@
-Will this work?
+Vignette to demonstrate how to estimate the agronomically optimum nitrogen fertilizer rate for maximizing yield. The example includes Kernza grain yield response to 6 N fertilizer rates tested at three locations in 2012.
