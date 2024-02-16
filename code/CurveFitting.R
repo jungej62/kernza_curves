@@ -118,6 +118,20 @@ anova(mod2)
 
 summary(mod1)
 summary(mod2)
+
+#We can also compare our quadratic model to one developed using the poly() function
+#You must include the "raw=TRUE" argument to get coefficients that make sense. You'll see that they are exactly the same as the quadratic fit in mod2 above. We'll use ggplot to fit a poly() smoother line through the points and again you'll see that it's exactly the same as the mod2 line in the ggplot figure above.
+mod3<-lme(seedyld~poly(Nfertnew, degree=2, raw=TRUE)*location, random=~1|rep, data=dat)
+anova(mod3)
+summary(mod3)
+
+#Check out the data with the poly function smoother added
+ggplot(sumdat, aes(x=Nfertnew, y=seedyld, color=location))+
+  geom_point()+
+  geom_errorbar(aes(ymin=seedyld-se, ymax=seedyld+se), width=0.2)+
+  stat_smooth(method = lm, formula = y ~ poly(x,2), se=F)
+#Now that we understand how the poly() function compares, we'll proceed with the manual quadratic fit.
+
 #There's no N rate X location interaction for either model, so I wouldn't treat each 
 #location independently, but for demonstration we'll do it anyway.
 

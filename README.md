@@ -1,3 +1,3 @@
 # kernza_curves
 Identifying nitrogen fertilizer rates for maximizing Kernza grain yields.
-Making a local change and testing my push.
+Use this Vignette to determine if you can identify an agronomically optimum nitrogen fertilizer rate (AONR) using field trial data. This code will fit linear and quadratic models to yield data in response to various N fertilizer rates at different locations and conduct statistical tests to determine which model is best using maximum liklihood ratio tests and AICc. It demonstrates how to rearrange quadratic model equations so you can fit those to the data using nls. The advantage of this is that the rearrangement of the equation allows the model to estimate a coefficient that's equal to the AONR. When our model estimates this, we also get a standard error of the coefficient, and a measure of the variability of AONR is super useful! 
